@@ -1,0 +1,5 @@
+# mvn archetype:generate 已经废弃改为mvn archetype:generate
+mvn archetype:generate -DgroudId=org.seckill -DartifactId=seckill -DarchetypeArtifactId=maven-archetype-webapp
+
+#以下方案依旧可行
+mvn org.apache.maven.plugins:maven-archetype-plugin:2.2:create -DgroupId=storg.seckill -DartifactId=seckill -DarchetypeArtifactId=maven-archetype-webapp
