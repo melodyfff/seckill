@@ -1,5 +1,6 @@
 package org.seckill.service.impl;
 
+import org.seckill.cache.RedisDao;
 import org.seckill.dao.SeckillDao;
 import org.seckill.dao.SuccessKilledDao;
 import org.seckill.dto.Exposer;
@@ -32,14 +33,15 @@ import java.util.List;
 @Service
 public class SeckillServiceImpl implements SeckillService {
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     //注入service依赖 @Resource
     @Autowired
     private SeckillDao seckillDao;
 
     @Autowired
     private SuccessKilledDao successKilledDao;
-
+    @Autowired
+    private RedisDao redisDao;
     //MD5字符串，用于混淆md5
     private final String slat = "asda&*%sdasdfxzczczx%$^&$#^";
 
@@ -58,10 +60,19 @@ public class SeckillServiceImpl implements SeckillService {
     }
 
     public Exposer exportSeckillUrl(long seckillId) {
-        Seckill seckill = seckillDao.queryById(seckillId);
-        if (seckill == null) {
-            return new Exposer(false, seckillId);
+        // 缓存优化,超时基础上的一致性
+        //访问redis
+        Seckill seckill = redisDao.getSeckill(seckillId);
+        if (seckill == null){
+            //访问数据库
+            seckill = seckillDao.queryById(seckillId);
+            if (seckill == null) {
+                return new Exposer(false, seckillId);
+            }else {
+                redisDao.putSeckill(seckill);
+            }
         }
+
         Date startTime = seckill.getStartTime();
         Date endTime = seckill.getEndTime();
         //当前系统时间
